@@ -1,0 +1,289 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L power:GND #PWR0101
+U 1 1 68FFD8DE
+P 1500 3250
+F 0 "#PWR0101" H 1500 3000 50  0001 C CNN
+F 1 "GND" H 1505 3077 50  0000 C CNN
+F 2 "" H 1500 3250 50  0001 C CNN
+F 3 "" H 1500 3250 50  0001 C CNN
+	1    1500 3250
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+VDC #PWR0102
+U 1 1 68FFD9C7
+P 1500 3900
+F 0 "#PWR0102" H 1500 3800 50  0001 C CNN
+F 1 "+VDC" H 1500 4175 50  0000 C CNN
+F 2 "" H 1500 3900 50  0001 C CNN
+F 3 "" H 1500 3900 50  0001 C CNN
+	1    1500 3900
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+5V #PWR0103
+U 1 1 68FFE185
+P 1500 2000
+F 0 "#PWR0103" H 1500 1850 50  0001 C CNN
+F 1 "+5V" H 1515 2173 50  0000 C CNN
+F 2 "" H 1500 2000 50  0001 C CNN
+F 3 "" H 1500 2000 50  0001 C CNN
+	1    1500 2000
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J1_VCC1
+U 1 1 6900724F
+P 1150 4000
+F 0 "J1_VCC1" H 1068 3675 50  0000 C CNN
+F 1 "Conn_01x02" H 1068 3766 50  0000 C CNN
+F 2 "Connector_Wire:SolderWirePad_1x02_P7.62mm_Drill2mm" H 1150 4000 50  0001 C CNN
+F 3 "~" H 1150 4000 50  0001 C CNN
+	1    1150 4000
+	-1   0    0    1   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J2_5V1
+U 1 1 69007E0D
+P 1150 3250
+F 0 "J2_5V1" H 1068 2925 50  0000 C CNN
+F 1 "Conn_01x02" H 1068 3016 50  0000 C CNN
+F 2 "Connector_Wire:SolderWirePad_1x02_P7.62mm_Drill2mm" H 1150 3250 50  0001 C CNN
+F 3 "~" H 1150 3250 50  0001 C CNN
+	1    1150 3250
+	-1   0    0    1   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x03 J5_SENSOR1
+U 1 1 69008261
+P 1150 1300
+F 0 "J5_SENSOR1" H 1068 975 50  0000 C CNN
+F 1 "Conn_01x03" H 1068 1066 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 1150 1300 50  0001 C CNN
+F 3 "~" H 1150 1300 50  0001 C CNN
+	1    1150 1300
+	-1   0    0    1   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x02 J3_ESC_POWER1
+U 1 1 690083BC
+P 1150 2650
+F 0 "J3_ESC_POWER1" H 1068 2325 50  0000 C CNN
+F 1 "Conn_01x02" H 1068 2416 50  0000 C CNN
+F 2 "Connector_Wire:SolderWirePad_1x02_P7.62mm_Drill2mm" H 1150 2650 50  0001 C CNN
+F 3 "~" H 1150 2650 50  0001 C CNN
+	1    1150 2650
+	-1   0    0    1   
+$EndComp
+$Comp
+L Connector_Generic:Conn_01x03 J4_ESC_CONTROL1
+U 1 1 690085A8
+P 1150 2000
+F 0 "J4_ESC_CONTROL1" H 1068 1675 50  0000 C CNN
+F 1 "Conn_01x03" H 1068 1766 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 1150 2000 50  0001 C CNN
+F 3 "~" H 1150 2000 50  0001 C CNN
+	1    1150 2000
+	-1   0    0    1   
+$EndComp
+$Comp
+L power:GND #PWR0106
+U 1 1 6901ECF3
+P 1500 2100
+F 0 "#PWR0106" H 1500 1850 50  0001 C CNN
+F 1 "GND" H 1505 1927 50  0000 C CNN
+F 2 "" H 1500 2100 50  0001 C CNN
+F 3 "" H 1500 2100 50  0001 C CNN
+	1    1500 2100
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0107
+U 1 1 6901EF95
+P 1500 1400
+F 0 "#PWR0107" H 1500 1150 50  0001 C CNN
+F 1 "GND" H 1505 1227 50  0000 C CNN
+F 2 "" H 1500 1400 50  0001 C CNN
+F 3 "" H 1500 1400 50  0001 C CNN
+	1    1500 1400
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1350 3250 1500 3250
+Wire Wire Line
+	1500 2650 1350 2650
+Wire Wire Line
+	1350 2100 1500 2100
+Wire Wire Line
+	1350 1400 1500 1400
+$Comp
+L power:+5V #PWR0108
+U 1 1 69034369
+P 1500 3150
+F 0 "#PWR0108" H 1500 3000 50  0001 C CNN
+F 1 "+5V" H 1515 3323 50  0000 C CNN
+F 2 "" H 1500 3150 50  0001 C CNN
+F 3 "" H 1500 3150 50  0001 C CNN
+	1    1500 3150
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+5V #PWR0109
+U 1 1 6903B4B8
+P 1500 1300
+F 0 "#PWR0109" H 1500 1150 50  0001 C CNN
+F 1 "+5V" H 1515 1473 50  0000 C CNN
+F 2 "" H 1500 1300 50  0001 C CNN
+F 3 "" H 1500 1300 50  0001 C CNN
+	1    1500 1300
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1350 1300 1500 1300
+Wire Wire Line
+	1350 3900 1500 3900
+Wire Wire Line
+	1500 3150 1350 3150
+Wire Wire Line
+	1350 2000 1500 2000
+$Comp
+L power:+VDC #PWR0110
+U 1 1 6904005F
+P 1500 2550
+F 0 "#PWR0110" H 1500 2450 50  0001 C CNN
+F 1 "+VDC" H 1500 2825 50  0000 C CNN
+F 2 "" H 1500 2550 50  0001 C CNN
+F 3 "" H 1500 2550 50  0001 C CNN
+	1    1500 2550
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1350 2550 1500 2550
+Text Label 1750 1200 0    50   ~ 0
+Sensor_signal
+Text Label 1750 1900 0    50   ~ 0
+ESC_PWM
+Wire Wire Line
+	1750 1900 1350 1900
+Wire Wire Line
+	1750 1200 1350 1200
+$Comp
+L Regulator_Switching:LM2596S-ADJ U1
+U 1 1 690579E8
+P 3150 3850
+F 0 "U1" H 3150 4217 50  0000 C CNN
+F 1 "LM2596S-ADJ" H 3150 4126 50  0000 C CNN
+F 2 "project-f:AZ-LM2596S" H 3200 3600 50  0001 L CIN
+F 3 "http://www.ti.com/lit/ds/symlink/lm2596.pdf" H 3150 3850 50  0001 C CNN
+	1    3150 3850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5350 4200 4500 4200
+Wire Wire Line
+	3650 4200 3650 3950
+Wire Wire Line
+	3650 1400 5350 1400
+Connection ~ 1500 3150
+Wire Wire Line
+	2650 3750 2100 3750
+Wire Wire Line
+	2100 3900 1500 3900
+Connection ~ 1500 3900
+Wire Wire Line
+	3150 4150 1900 4150
+Wire Wire Line
+	1900 4150 1900 4000
+Wire Wire Line
+	2100 3900 2100 3750
+Wire Wire Line
+	1500 3150 3650 3150
+Connection ~ 3650 3150
+Wire Wire Line
+	3650 3150 3650 1400
+Wire Wire Line
+	3650 3150 3650 3750
+Text Label 6150 3600 0    50   ~ 0
+ESC_PWM
+Text Label 6150 3700 0    50   ~ 0
+Sensor_signal
+Wire Wire Line
+	6150 3600 5950 3600
+Wire Wire Line
+	6150 3700 5950 3700
+$Comp
+L RF_Module:ESP32-WROOM-32 U2
+U 1 1 69085F90
+P 5350 2800
+F 0 "U2" H 5350 4381 50  0000 C CNN
+F 1 "ESP32-WROOM-32" H 5350 4290 50  0000 C CNN
+F 2 "project-f:ESP32_DevkitC" H 5350 1300 50  0001 C CNN
+F 3 "https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf" H 5050 2850 50  0001 C CNN
+	1    5350 2800
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GNDPWR #PWR0104
+U 1 1 6909964F
+P 1500 4000
+F 0 "#PWR0104" H 1500 3800 50  0001 C CNN
+F 1 "GNDPWR" H 1504 3846 50  0000 C CNN
+F 2 "" H 1500 3950 50  0001 C CNN
+F 3 "" H 1500 3950 50  0001 C CNN
+	1    1500 4000
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1350 4000 1500 4000
+Connection ~ 1500 4000
+Wire Wire Line
+	1500 4000 1900 4000
+$Comp
+L power:GNDPWR #PWR0105
+U 1 1 6909E789
+P 1500 2650
+F 0 "#PWR0105" H 1500 2450 50  0001 C CNN
+F 1 "GNDPWR" H 1504 2496 50  0000 C CNN
+F 2 "" H 1500 2600 50  0001 C CNN
+F 3 "" H 1500 2600 50  0001 C CNN
+	1    1500 2650
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0111
+U 1 1 6909F405
+P 4500 4200
+F 0 "#PWR0111" H 4500 3950 50  0001 C CNN
+F 1 "GND" H 4505 4027 50  0000 C CNN
+F 2 "" H 4500 4200 50  0001 C CNN
+F 3 "" H 4500 4200 50  0001 C CNN
+	1    4500 4200
+	1    0    0    -1  
+$EndComp
+Connection ~ 4500 4200
+Wire Wire Line
+	4500 4200 3650 4200
+Text Label 6150 3900 0    50   ~ 0
+Debug1
+Text Label 6150 3300 0    50   ~ 0
+Debug2
+Wire Wire Line
+	5950 3300 6150 3300
+Wire Wire Line
+	5950 3900 6150 3900
+$EndSCHEMATC
