@@ -59,18 +59,3 @@ I need a C code to run on an azdelivery esp32 devkitc v4, via the Arduino IDE, w
     * Print the result at 1 Hz: RPM count, the threshold value, and other statistics as needed
 * Use pin 32 for the PWM and 33 for the ADC input
 ```
-
-ADC notes:
-
-(100 k RPM = 170 k samples/sec)
-
-* Simple Arduino analogRead() / naive loop - 100-1000 samples/sec
-* adc1_get_raw() in a tight ISR or loop - 10-100 k samples/sec
-    * single ADC1 channel in optimized code
-* I2S / ADC DMA mode (continuous sampling with DMA) - 100-1000 k samples/sec
-    * Note: some ESP-IDF docs / driver modes document lower practical limits (e.g. certain I2S-ADC built-in modes note 150 kHz as a safe target for some configurations)
-
-https://docs.espressif.com/projects/arduino-esp32/en/latest/api/timer.html
-https://espressif-docs.readthedocs-hosted.com/projects/arduino-esp32/en/latest/api/timer.html
-
-https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/pcnt.html
