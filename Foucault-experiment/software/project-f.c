@@ -1,13 +1,15 @@
 #include "nod_hal.h"
 
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 // ----------------------- User config -----------------------
 
 #define SERIAL_BAUD     115200
 
-#define PWM_PIN         (nod_pwm_pin_t)32                   // GPIO32
-#define ADC_PIN         (nod_adc1_channel_t)ADC1_CHANNEL_5  // GPIO33
+#define PWM_PIN         NOD_PWM_GPIO_32
+#define ADC_PIN         NOD_ADC1_GPIO_33
 
 #define PWM_FREQ_HZ     50
 #define PWM_MIN_US      1000
@@ -25,7 +27,7 @@
 
 // ----------------------- Globals -----------------------
 
-nod_mutex_t timer_mutex = portMUX_INITIALIZER_UNLOCKED;
+nod_mutex_t timer_mutex = {0};
 
 volatile uint32_t sample_count = 0, crossing_count = 0;
 volatile uint32_t val_hist[VAL_HIST_BINS] = {0};
@@ -84,19 +86,19 @@ void nod_armESC(void)
 
 // ----------------------- ISR -----------------------
 
-void IRAM_ATTR nod_timer_irq(void)
+void NOD_IRAM_ATTR nod_timer_irq(void)
 {
     static bool currently_above = false;
 
     const uint32_t start_sec = nod_time_get_sec();
 
-    const int raw = adc1_get_raw(ADC_PIN);
+    const int raw = nod_adc1_read(ADC_PIN);
 
-    const uint32_t bin = (uint32_t)((raw*HIST_BINS)/4096);
+    const uint32_t bin = (uint32_t)((raw*VAL_HIST_BINS)/4096);
 
-    nod_mutex_lock_ISR(&timer_mutex);
+    nod_mutex_lock(&timer_mutex);
 
-    hist[bin]++;
+    val_hist[bin]++;
     sample_count++;
 
     // crossing detection
@@ -116,10 +118,11 @@ void IRAM_ATTR nod_timer_irq(void)
     const uint32_t dur_sec = nod_time_get_sec() - start_sec;
     if (dur_sec >= 0.001 && dur_sec <= 1.000)
     {
-        irq_timing_hist[duration/1000.0 - 1]++;
+        uint32_t index = dur_sec * 1000.0 - 1;
+        irq_timing_hist[index]++;
     }
 
-    nod_mutex_unlock_ISR(&timer_mutex);
+    nod_mutex_unlock(&timer_mutex);
 }
 
 // ----------------------- Decile helper -----------------------
@@ -147,34 +150,31 @@ int main(void)
     nod_time_sleep_sec(0.200);
     nod_printf("\nESP32 ESC+RPM+Profiler\n");
 
-    nod_adc1_init(ADC_PIN);
-
     nod_pwm_init(PWM_PIN, PWM_FREQ_HZ);
     nod_pwm_write(PWM_PIN, nod_pulseUS_to_duty(PWM_MIN_US));
+
+    nod_adc1_init(ADC_PIN);
+
+    nod_timer_t timer;
+    nod_timer_init(&timer, /* frequency */ 1 * 1000 * 1000, /* alarm_value */ 100 * 1000 / 60 * 100 /* = 170 K */, &nod_timer_irq);
+
+    nod_mutex_init(&timer_mutex);
 
     for (int i = 0; i < VAL_HIST_BINS; i++)
     {
         val_hist[i] = 0;
     }
 
-    // void timerAlarm(hw_timer_t * timer, uint64_t alarm_value, bool autoreload, uint64_t reload_count);
-    // timer = timerBegin(1000000);
-    // timerAttachInterrupt(timer, &onTimer);
-    // timerAlarm(timer, 1000000, true, 0);
-
-    nod_timer_t timer;
-    nod_timer_init(&timer, /* frequency */ 1 * 1000 * 1000, /* alarm_value */ 100 * 1000 / 60 * 100 /* = 170 K */, &nod_timer_irq);
-
     nod_armESC();
+
+    double last_print_sec = nod_time_get_sec();
 
     while (true)
     {
-        static uint32_t last_print_sec = nod_time_get_sec();
-
         // Read serial input
 
         uint32_t rpm_command = 1000;
-        static String buf = "";
+        char buf[128] = "";
 
         while (nod_stdin_peek())
         {
@@ -186,10 +186,10 @@ int main(void)
 
             if (c == '\n')
             {
-                if (buf.length() > 0)
+                if (strlen(buf) > 0)
                 {
-                    rpm_command = nod_clampRPM(buf.toInt());
-                    buf = "";
+                    rpm_command = nod_clampRPM(atoi(buf));
+                    buf[0] = '\0';
                     nod_printf("[CMD] RPM = %u\n", rpm_command);
 
                     // Update PWM
@@ -198,11 +198,9 @@ int main(void)
             }
             else
             {
-                buf += c;
-                if (buf.length() > 16)
-                {
-                    buf = buf.substring(buf.length() - 16);
-                }
+                uint32_t len = strlen(buf);
+                buf[len] = c;
+                buf[len+1] = '\0';
             }
         }
 

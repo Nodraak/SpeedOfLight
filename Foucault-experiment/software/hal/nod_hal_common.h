@@ -42,8 +42,11 @@ int nod_stdin_read(void);
     https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ledc.html
 */
 
-enum nod_pwm_pin_t : int;
-typedef enum nod_pwm_pin_t nod_pwm_pin_t;
+typedef enum {
+    NOD_PWM_GPIO_0 = 0, // GPIO_NUM_0
+    NOD_PWM_GPIO_32 = 32, // GPIO_NUM_32
+    // TODO
+} nod_pwm_pin_t;
 
 // bool ledcSetClockSource(ledc_clk_cfg_t source);
 //      source:
@@ -77,13 +80,18 @@ nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty);
     https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/pcnt.html
 */
 
-enum nod_adc1_channel_t : int;
-typedef enum nod_adc1_channel_t nod_adc1_channel_t;
+typedef enum {
+    NOD_ADC1_GPIO_36 = 0, // ADC1_CHANNEL_0
+    NOD_ADC1_GPIO_33 = 5, // ADC1_CHANNEL_5
+    // TODO
+} nod_adc1_channel_t;
 
 // esp_err_t adc1_config_width(adc_bits_width_t width_bit)
 //      width_bit: hardcoded to ADC_WIDTH_BIT_12
 // esp_err_t adc1_config_channel_atten(adc1_channel_t channel, adc_atten_t atten)
 //      atten: hardcoded to ADC_ATTEN_DB_11
+//          11 dB attenuation (ADC_ATTEN_DB_11) gives full-scale voltage 3.9 V
+//          The maximum reading is 4095 for 12-bits
 // Linux: no op
 nod_status_t nod_adc1_init(nod_adc1_channel_t pin);
 
@@ -96,6 +104,8 @@ int nod_adc1_read(nod_adc1_channel_t pin);
     https://docs.espressif.com/projects/arduino-esp32/en/latest/api/timer.html
 */
 
+// Arduino ESP32: hw_timer_t
+// Linux: empty
 typedef struct nod_timer_t nod_timer_t;
 
 // Arduino ESP32: hw_timer_t * timerBegin(uint32_t frequency);
@@ -107,8 +117,13 @@ nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t ala
     Mutex
 */
 
-// Arduino ESP32: portMUX_TYPE isrMux
+// Arduino ESP32: portMUX_TYPE
+// Linux: empty
 typedef struct nod_mutex_t nod_mutex_t;
+
+// Arduino ESP32: set to portMUX_INITIALIZER_UNLOCKED
+// Linux: no op
+void nod_mutex_init(nod_mutex_t *mutex);
 
 // Arduino ESP32: portENTER_CRITICAL_ISR()
 // Linux: no op

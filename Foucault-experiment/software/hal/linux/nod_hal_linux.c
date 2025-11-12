@@ -95,6 +95,11 @@ nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t ala
     Mutex
 */
 
+void nod_mutex_init(nod_mutex_t *mutex)
+{
+    (void)mutex;
+}
+
 void nod_mutex_lock(nod_mutex_t *mutex)
 {
     (void)mutex;

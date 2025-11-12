@@ -5,6 +5,9 @@
 #include "driver/ledc.h"
 #include "esp_timer.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+
 /*
     Main
 */
@@ -80,14 +83,28 @@ int nod_stdin_read(void)
 
 nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
 {
-    ledcAttach((uint8_t)pin, freq, /* resolution */ 20);
-    return NOD_STATUS_SUCCESS;
+    const bool ret = ledcAttach((uint8_t)pin, freq, /* resolution */ 20);
+    if (ret == true)
+    {
+        return NOD_STATUS_SUCCESS;
+    }
+    else
+    {
+        return NOD_STATUS_ERROR;
+    }
 }
 
 nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty)
 {
-    ledcWrite((uint8_t)pin, duty);
-    return NOD_STATUS_SUCCESS;
+    const bool ret = ledcWrite((uint8_t)pin, duty);
+    if (ret == true)
+    {
+        return NOD_STATUS_SUCCESS;
+    }
+    else
+    {
+        return NOD_STATUS_ERROR;
+    }
 }
 
 /*
@@ -96,8 +113,20 @@ nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty)
 
 nod_status_t nod_adc1_init(nod_adc1_channel_t ch)
 {
-    adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten((adc1_channel_t)ch, ADC_ATTEN_DB_11);
+    const esp_err_t ret = ESP_OK;
+
+    ret = adc1_config_width(ADC_WIDTH_BIT_12);
+    if (ret != ESP_OK)
+    {
+        return NOD_STATUS_ERROR;
+    }
+
+    ret = adc1_config_channel_atten((adc1_channel_t)ch, ADC_ATTEN_DB_11);
+    if (ret != ESP_OK)
+    {
+        return NOD_STATUS_ERROR;
+    }
+
     return NOD_STATUS_SUCCESS;
 }
 
@@ -112,9 +141,9 @@ int nod_adc1_read(nod_adc1_channel_t ch)
 
 nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t alarm_value, void (*userFunc)(void))
 {
-    *timer = timerBegin(frequency);
-    timerAttachInterrupt(timer, userFunc);
-    timerAlarm(timer, alarm_value, /* autoreload */ true, /* reload_count */ 0);
+    timer->data = timerBegin(frequency);
+    timerAttachInterrupt(timer->data, userFunc);
+    timerAlarm(timer->data, alarm_value, /* autoreload */ true, /* reload_count */ 0);
     return NOD_STATUS_SUCCESS;
 }
 
@@ -122,12 +151,17 @@ nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t ala
     Mutex
 */
 
+void nod_mutex_init(nod_mutex_t *mutex)
+{
+    mutex->data = portMUX_INITIALIZER_UNLOCKED;
+}
+
 void nod_mutex_lock(nod_mutex_t *mutex)
 {
-    portENTER_CRITICAL_ISR((portMUX_TYPE *)mutex);
+    portENTER_CRITICAL_ISR(&mutex->data);
 }
 
 void nod_mutex_unlock(nod_mutex_t *mutex)
 {
-    portEXIT_CRITICAL_ISR((portMUX_TYPE *)mutex);
+    portEXIT_CRITICAL_ISR(&mutex->data);
 }
