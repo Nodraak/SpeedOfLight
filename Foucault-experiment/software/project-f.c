@@ -1,4 +1,5 @@
 #include "nod_hal.h"
+#include "nod_stats.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -144,8 +145,29 @@ void nod_deciles(uint32_t *hist, int bins, int count, uint8_t *out)
 
 // ----------------------- Main -----------------------
 
+
+uint32_t mapper(uint32_t param)
+{
+    return param;
+}
+
 int main(void)
 {
+    nod_stats_t stats = {0};
+    uint32_t buf[200] = {0};
+    nod_stats_init(&stats, buf, sizeof(buf)/sizeof(buf[0]), mapper, mapper);
+
+    uint32_t data[] = {10, 10, 10, 20, 20, 30, 30, 40, 50, 50, 60, 60, 60, 70, 80, 90, 90, 90, 100};
+    for (uint32_t i = 0; i < sizeof(data) / sizeof(data[0]); i++)
+    {
+        nod_stats_add_sample(&stats, data[i]);
+    }
+    nod_stats_print_stats(&stats, "stats");
+
+    return 0;
+
+
+
     nod_stdout_init(SERIAL_BAUD);
     nod_time_sleep_sec(0.200);
     nod_printf("\nESP32 ESC+RPM+Profiler\n");
