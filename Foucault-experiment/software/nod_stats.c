@@ -48,54 +48,59 @@ void nod_stats_print_stats(nod_stats_t *stats, const char *title)
         sample_total_count += stats->buffer[i];
     }
 
-    // min
-    for (uint32_t i = 0; i < stats->buffer_size; i++)
+    if (sample_total_count)
     {
-        if (stats->buffer[i] != 0)
+        // min
+        for (uint32_t i = 0; i < stats->buffer_size; i++)
         {
-            min = stats->index2sample(i);
-            break;
+            if (stats->buffer[i] != 0)
+            {
+                min = stats->index2sample(i);
+                break;
+            }
         }
-    }
 
-    // max
-    for (uint32_t i = stats->buffer_size - 1; i >= 0; i--)
-    {
-        if (stats->buffer[i] != 0)
+        // max
+        for (uint32_t i = stats->buffer_size - 1; i > 0; i--)
         {
-            max = stats->index2sample(i);
-            break;
+            printf("-> %d\n", i);
+            if (stats->buffer[i] != 0)
+            {
+                max = stats->index2sample(i);
+                break;
+            }
         }
-    }
 
-    // median
-    sample_counter = 0;
-    for (uint32_t i = stats->buffer_size - 1; i >= 0; i--)
-    {
-        sample_counter += stats->buffer[i];
-
-        if (sample_counter >= sample_total_count/2)
+        // median
+        sample_counter = 0;
+        for (uint32_t i = 0; i < stats->buffer_size; i++)
         {
-            median = stats->index2sample(i);
-            break;
+            sample_counter += stats->buffer[i];
+
+            if (sample_counter >= sample_total_count/2)
+            {
+                median = stats->index2sample(i);
+                break;
+            }
         }
-    }
 
-    // deciles
-    sample_counter = 0;
-    uint32_t current_decile = 0;
-    for (uint32_t i = 0; i < stats->buffer_size; i++)
-    {
-        sample_counter += stats->buffer[i];
-
-        while (sample_counter >= sample_total_count * (current_decile + 1) / 10)
+        // deciles
+        sample_counter = 0;
+        uint32_t current_decile = 0;
+        for (uint32_t i = 0; i < stats->buffer_size; i++)
         {
-            deciles[current_decile] = stats->index2sample(i);
-            current_decile++;
+            sample_counter += stats->buffer[i];
+
+            while (sample_counter >= sample_total_count * (current_decile + 1) / 10)
+            {
+                deciles[current_decile] = stats->index2sample(i);
+                current_decile++;
+            }
         }
     }
 
     // print
+    // 160 char = 15 ms
     nod_printf("/--- %s\n", title);
     nod_printf("| sample_total_count=%6d\n", sample_total_count);
     nod_printf("| min=%6d | med=%6d | max=%6d\n", min, median, max);

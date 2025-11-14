@@ -36,14 +36,24 @@ void loop(void)
     Time
 */
 
+void nod_time_init(void)
+{
+    // Nothing to do
+}
+
 void nod_time_sleep_sec(double delay_sec)
 {
     delay((uint32_t)(delay_sec * 1000.0));
 }
 
+uint32_t nod_time_get_us(void)
+{
+    return esp_timer_get_time();
+}
+
 double nod_time_get_sec(void)
 {
-    return esp_timer_get_time() / 1e6;
+    return nod_time_get_us / 1000.0 / 1000.0
 }
 
 /*
@@ -83,7 +93,19 @@ int nod_stdin_read(void)
 
 nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
 {
-    const bool ret = ledcAttach((uint8_t)pin, freq, /* resolution */ 20);
+    bool ret = true;
+
+    ret = ledcSetClockSource(LEDC_APB_CLK);
+    if (ret == true)
+    {
+        return NOD_STATUS_SUCCESS;
+    }
+    else
+    {
+        return NOD_STATUS_ERROR;
+    }
+
+    ret = ledcAttach((uint8_t)pin, freq, /* resolution */ 20);
     if (ret == true)
     {
         return NOD_STATUS_SUCCESS;
@@ -94,7 +116,7 @@ nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
     }
 }
 
-nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty)
+nod_status_t nod_pwm_write_duty(nod_pwm_pin_t pin, uint32_t duty)
 {
     const bool ret = ledcWrite((uint8_t)pin, duty);
     if (ret == true)
@@ -105,6 +127,17 @@ nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty)
     {
         return NOD_STATUS_ERROR;
     }
+}
+
+nod_status_t nod_pwm_write_us(nod_pwm_pin_t pin, uint32_t freq, uint32_t duty_us)
+{
+    const uint32_t pulse_ms = duty_us / 1000;
+    const uint32_t period_ms = 1000 / freq;
+    const uint32_t duty_max = ((1 << /* resolution */ 20) - 1);
+
+    const uint32_t duty =  pulse_ms / period_ms * duty_max;
+
+    return nod_pwm_write_duty(pin, duty);
 }
 
 /*

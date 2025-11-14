@@ -10,17 +10,33 @@
     Time
 */
 
+static struct timespec start_time;
+
+void nod_time_init(void)
+{
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
+}
+
 void nod_time_sleep_sec(double delay_sec)
 {
     usleep((useconds_t)(delay_sec * 1e6));
 }
 
+uint32_t nod_time_get_us(void)
+{
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (
+        (now.tv_sec - start_time.tv_sec) * 1000 * 1000
+        + (now.tv_nsec - start_time.tv_nsec) / 1000
+    );
+}
+
 double nod_time_get_sec(void)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_MONOTONIC, &ts);
-    return ts.tv_sec + ts.tv_nsec / 1e9;
+    return nod_time_get_us() / 1000.0 / 1000.0;
 }
+
 
 /*
     Stdio
@@ -41,7 +57,8 @@ void nod_printf(const char *fmt, ...)
 
 int nod_stdin_peek(void)
 {
-    return getchar();  // simple blocking version
+    // return getchar();  // simple blocking version
+    return false;
 }
 
 int nod_stdin_read(void)
@@ -59,9 +76,15 @@ nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
     return NOD_STATUS_SUCCESS;
 }
 
-nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty)
+nod_status_t nod_pwm_write_duty(nod_pwm_pin_t pin, uint32_t duty)
 {
     (void)pin; (void)duty;
+    return NOD_STATUS_SUCCESS;
+}
+
+nod_status_t nod_pwm_write_us(nod_pwm_pin_t pin, uint32_t freq, uint32_t duty_us)
+{
+    (void)pin; (void)freq; (void)duty_us;
     return NOD_STATUS_SUCCESS;
 }
 

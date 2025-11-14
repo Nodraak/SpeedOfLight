@@ -13,13 +13,17 @@ typedef enum {
     Time
 */
 
+void nod_time_init(void);
+
 // Arduino ESP32: delay()
 // Linux: usleep()
 void nod_time_sleep_sec(double delay_sec);
 
 // Arduino ESP32: esp_timer_get_time() (returns us) (alternative: millis())
 // Linux: clock_gettime()
-double nod_time_get_sec();
+uint32_t nod_time_get_us(void);
+
+double nod_time_get_sec(void);
 
 /*
     Stdio
@@ -59,7 +63,9 @@ nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq);
 
 // bool ledcWrite(uint8_t pin, uint32_t duty);
 // Linux: no op
-nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty);
+nod_status_t nod_pwm_write_duty(nod_pwm_pin_t pin, uint32_t duty);
+
+nod_status_t nod_pwm_write_us(nod_pwm_pin_t pin, uint32_t freq, uint32_t duty_us);
 
 /*
     ADC
@@ -76,7 +82,7 @@ nod_status_t nod_pwm_write(nod_pwm_pin_t pin, uint32_t duty);
         * Note: some ESP-IDF docs / driver modes document lower practical limits (e.g. certain I2S-ADC built-in modes
             note 150 kHz as a safe target for some configurations)
 
-    Alternative (need digitalization frontend): PCNT
+    Alternative (need digitalization frontend): GPIO IRQ or PCNT
     https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/pcnt.html
 */
 
@@ -97,6 +103,7 @@ nod_status_t nod_adc1_init(nod_adc1_channel_t pin);
 
 // Arduino ESP32: int adc1_get_raw(adc1_channel_t channel)
 // Linux: no op
+// Range: 0-4095 (resolution hardcoded to 12 bits)
 int nod_adc1_read(nod_adc1_channel_t pin);
 
 /*
