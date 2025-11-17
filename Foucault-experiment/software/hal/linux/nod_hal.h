@@ -2,6 +2,9 @@
 
 #include "../nod_hal_common.h"
 
+#define NOD_ADC_STUB_FILEPATH "hal/linux/adc-data-1.txt"
+// #define NOD_ADC_STUB_FILEPATH "hal/linux/adc-data-10.txt"
+
 #define NOD_IRAM_ATTR
 
 typedef struct nod_timer_t {

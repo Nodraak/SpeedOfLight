@@ -51,25 +51,11 @@ uint32_t rev_count = 0;
 
 // ----------------------- Utilities -----------------------
 
-void nod_assert(bool cond)
-{
-    if (!cond)
-    {
-        while (true)
-        {
-            nod_printf(".\n");
-            nod_time_sleep_sec(1.000);
-        }
-    }
-}
-
 uint32_t nod_rpm_to_pulse_us(uint32_t rpm)
 {
     const uint32_t rpm_clamped = (rpm < REV_MIN_RPM) ? REV_MIN_RPM : (rpm > REV_MAX_RPM) ? REV_MAX_RPM : rpm;
     return PWM_MIN_US + (rpm_clamped - REV_MIN_RPM) * (PWM_MAX_US - PWM_MIN_US) / (REV_MAX_RPM - REV_MIN_RPM);
 }
-
-// ----------------------- ESC Arming -----------------------
 
 void nod_esc_arm(void)
 {
@@ -109,21 +95,23 @@ void NOD_IRAM_ATTR nod_timer_irq(void)
         // compute rev duration
         const uint32_t rev_duration_us = start_us - start_us_last;
         const uint32_t rev_duration_index = rev_duration_us;
-        nod_assert(0 <= rev_duration_index);
-        nod_assert(rev_duration_index < REV_HIST_BINS);
-        rev_duration_hist_irq[rev_duration_index] ++;
+        if (0 <= rev_duration_index && rev_duration_index < REV_HIST_BINS)
+        {
+            rev_duration_hist_irq[rev_duration_index] ++;
+        }
 
         // read sample
         const uint32_t adc_raw = nod_adc1_read(ADC_PIN);
         const uint32_t sample_index = adc_raw;
-        nod_assert(0 <= sample_index);
-        nod_assert(sample_index < SAMPLE_HIST_BINS);
-        sample_hist_irq[sample_index] ++;
+        if (0 <= sample_index && sample_index < SAMPLE_HIST_BINS)
+        {
+            sample_hist_irq[sample_index] ++;
+        }
 
         // crossing detection with basic debounce
         if (sample_index >= threshold_index)
         {
-            if (!currently_above)
+            if (currently_above == false)
             {
                 rev_count++;
                 currently_above = true;
@@ -181,7 +169,7 @@ int main(void)
     threshold_index = SAMPLE_HIST_BINS/2;  // init to average
     uint32_t rpm_command = 1000;
 
-    // nod_esc_arm();
+    nod_esc_arm();
 
     nod_pwm_write_us(PWM_PIN, PWM_FREQ_HZ, nod_rpm_to_pulse_us(rpm_command));
 
@@ -196,7 +184,9 @@ int main(void)
     double last_print_sec = nod_time_get_sec();
     while (true)
     {
+        //
         // Read serial input
+        //
 
         char buf[128] = "";
 
@@ -214,6 +204,8 @@ int main(void)
                 buf[0] = '\0';
 
                 // Update PWM
+                if (rpm_command / 60 == 0)
+                    rpm_command = 60;
                 nod_printf("cmd_rpm = %d RPM ; rev dur = %d us\n", rpm_command, 1000 * 1000 / (rpm_command / 60));
                 nod_pwm_write_us(PWM_PIN, PWM_FREQ_HZ, nod_rpm_to_pulse_us(rpm_command));
             }
@@ -225,13 +217,17 @@ int main(void)
             }
         }
 
+        //
         // 1 Hz status print
+        //
 
         const uint32_t now_sec = nod_time_get_sec();
 
         if (now_sec - last_print_sec >= PRINT_CYCLE_SEC)
         {
+            ///
             // copy IRQ-owned data to local working copy, and reset IRQ copy
+            ///
 
             nod_mutex_lock(&timer_mutex);
 
@@ -254,7 +250,7 @@ int main(void)
             //
 
             uint32_t sum_below_threshold = 0;
-            uint32_t sample_total_count_below_threshold = 0;
+            uint32_t sample_total_count_below_threshold = 1; //  avoid div by zero
             for (uint32_t i = 0; i < threshold_index; i++)
             {
                 sum_below_threshold += i * sample_hist_thread[i];
@@ -263,7 +259,7 @@ int main(void)
             const uint32_t average_below = sum_below_threshold / sample_total_count_below_threshold;
 
             uint32_t sum_above_threshold = 0;
-            uint32_t sample_total_count_above_threshold = 0;
+            uint32_t sample_total_count_above_threshold = 1; //  avoid div by zero
             for (uint32_t i = threshold_index; i < SAMPLE_HIST_BINS; i++)
             {
                 sum_above_threshold += i * sample_hist_thread[i];
@@ -275,7 +271,14 @@ int main(void)
 
             threshold_index = average;
 
+            //
             // print
+            //
+
+            nod_printf("\n");
+
+            if (rpm_command / 60 == 0)
+                rpm_command = 60;
 
             if (rev_count == 0)
                 rev_count = 1;
@@ -283,8 +286,6 @@ int main(void)
             nod_printf("cmd_rpm = %6d RPM ; rev dur = %6d us\n", rpm_command, 1000 * 1000 / (rpm_command / 60));
             nod_printf("meas_rpm = %6d RPM ; rev dur = %6d us\n", rev_count * 60, 1000 * 1000 / rev_count);
             nod_printf("threshold_index = %4d [0-%d] = %5.3f V\n", threshold_index, SAMPLE_HIST_BINS, threshold_index * 5.0 / SAMPLE_HIST_BINS);
-
-            rev_count = 0;
 
             // print sample stats
 
@@ -305,10 +306,12 @@ int main(void)
             nod_stats_print_stats(&stats_irq_duration, "irq_duration");
 
             nod_printf("\n");
-            nod_printf("\n");
 
             last_print_sec += 1.000;
         }
+
+        // Linux simulation of IRQs - TODO: use a background thread
+        // nod_timer_irq();
 
         nod_time_sleep_sec(0.001);
     }

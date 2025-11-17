@@ -10,6 +10,17 @@ typedef enum {
 } nod_status_t;
 
 /*
+    Assert
+*/
+
+// public API
+void nod_assert(bool cond);
+
+// private implementation
+#define nod_assert(cond) nod_assert_(cond, __FILE__, __LINE__, #cond)
+void nod_assert_(bool cond, char *file, int line, const char *cond_s);
+
+/*
     Time
 */
 

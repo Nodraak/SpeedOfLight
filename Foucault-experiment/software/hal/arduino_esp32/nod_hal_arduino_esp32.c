@@ -51,11 +51,6 @@ uint32_t nod_time_get_us(void)
     return esp_timer_get_time();
 }
 
-double nod_time_get_sec(void)
-{
-    return nod_time_get_us / 1000.0 / 1000.0
-}
-
 /*
     Stdio
 */
@@ -72,6 +67,7 @@ void nod_printf(const char *fmt, ...)
     va_start(args, fmt);
     vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
+
     Serial.print(buf);
 }
 
@@ -127,17 +123,6 @@ nod_status_t nod_pwm_write_duty(nod_pwm_pin_t pin, uint32_t duty)
     {
         return NOD_STATUS_ERROR;
     }
-}
-
-nod_status_t nod_pwm_write_us(nod_pwm_pin_t pin, uint32_t freq, uint32_t duty_us)
-{
-    const uint32_t pulse_ms = duty_us / 1000;
-    const uint32_t period_ms = 1000 / freq;
-    const uint32_t duty_max = ((1 << /* resolution */ 20) - 1);
-
-    const uint32_t duty =  pulse_ms / period_ms * duty_max;
-
-    return nod_pwm_write_duty(pin, duty);
 }
 
 /*

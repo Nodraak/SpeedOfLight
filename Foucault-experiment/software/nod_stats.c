@@ -19,23 +19,23 @@ void nod_stats_init(
     stat->sample2index = sample2index;
     stat->index2sample = index2sample;
 
-    memset(stat->buffer, 0, sizeof(stat->buffer[0]) * stat->buffer_size);
+    // memset(stat->buffer, 0, sizeof(stat->buffer[0]) * stat->buffer_size);
 }
 
-void nod_stats_add_sample(nod_stats_t *stats, uint32_t sample)
-{
-    int32_t index = stats->sample2index(sample);
-    if (index < 0)
-    {
-        index = 0;
-    }
-    if (stats->buffer_size <= index)
-    {
-        index = stats->buffer_size - 1;
-    }
-
-    stats->buffer[index] += 1;
-}
+// void nod_stats_add_sample(nod_stats_t *stats, uint32_t sample)
+// {
+//     uint32_t index = stats->sample2index(sample);
+//     if (index < 0)
+//     {
+//         index = 0;
+//     }
+//     if (stats->buffer_size <= index)
+//     {
+//         index = stats->buffer_size - 1;
+//     }
+//
+//     stats->buffer[index] += 1;
+// }
 
 void nod_stats_print_stats(nod_stats_t *stats, const char *title)
 {
@@ -63,7 +63,6 @@ void nod_stats_print_stats(nod_stats_t *stats, const char *title)
         // max
         for (uint32_t i = stats->buffer_size - 1; i > 0; i--)
         {
-            printf("-> %d\n", i);
             if (stats->buffer[i] != 0)
             {
                 max = stats->index2sample(i);

@@ -17,7 +17,7 @@ void nod_stats_init(
     uint32_t (*index2sample)(uint32_t param)
 );
 
-void nod_stats_add_sample(nod_stats_t *stats, uint32_t sample);
+// void nod_stats_add_sample(nod_stats_t *stats, uint32_t sample);
 
 void nod_stats_compute_deciles(nod_stats_t *stats, uint32_t deciles[10]);
 

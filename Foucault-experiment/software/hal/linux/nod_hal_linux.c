@@ -3,6 +3,8 @@
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -32,12 +34,6 @@ uint32_t nod_time_get_us(void)
     );
 }
 
-double nod_time_get_sec(void)
-{
-    return nod_time_get_us() / 1000.0 / 1000.0;
-}
-
-
 /*
     Stdio
 */
@@ -57,6 +53,7 @@ void nod_printf(const char *fmt, ...)
 
 int nod_stdin_peek(void)
 {
+    // TODO
     // return getchar();  // simple blocking version
     return false;
 }
@@ -72,19 +69,13 @@ int nod_stdin_read(void)
 
 nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
 {
-    (void)pin; (void)freq;
+    nod_printf("nod_pwm_init: pin=%d freq=%d\n", pin, freq);
     return NOD_STATUS_SUCCESS;
 }
 
 nod_status_t nod_pwm_write_duty(nod_pwm_pin_t pin, uint32_t duty)
 {
-    (void)pin; (void)duty;
-    return NOD_STATUS_SUCCESS;
-}
-
-nod_status_t nod_pwm_write_us(nod_pwm_pin_t pin, uint32_t freq, uint32_t duty_us)
-{
-    (void)pin; (void)freq; (void)duty_us;
+    nod_printf("nod_pwm_write_duty: pin=%d duty=%d\n", pin, duty);
     return NOD_STATUS_SUCCESS;
 }
 
@@ -94,14 +85,33 @@ nod_status_t nod_pwm_write_us(nod_pwm_pin_t pin, uint32_t freq, uint32_t duty_us
 
 nod_status_t nod_adc1_init(nod_adc1_channel_t ch)
 {
-    (void)ch;
+    nod_printf("nod_adc1_init: ch=%d\n", ch);
     return NOD_STATUS_SUCCESS;
 }
 
 int nod_adc1_read(nod_adc1_channel_t ch)
 {
+    static FILE *f = NULL;
+
     (void)ch;
-    return 512; // fake middle value
+    // nod_printf("nod_adc1_read: ch=%d\n", ch);
+
+    if (f == NULL)
+    {
+        f = fopen(NOD_ADC_STUB_FILEPATH, "r");
+        return 0;
+    }
+
+    char buffer[64] = "";
+    char *ret = fgets(buffer, 64, f);
+    if (ret == NULL)
+    {
+        fclose(f);
+        f = NULL;
+        return 0;
+    }
+
+    return atoi(buffer);
 }
 
 /*
@@ -110,7 +120,8 @@ int nod_adc1_read(nod_adc1_channel_t ch)
 
 nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t alarm_value, void (*userFunc)(void))
 {
-    (void)timer; (void)frequency; (void)alarm_value; (void)userFunc;
+    (void)timer; (void)userFunc;
+    nod_printf("nod_timer_init: frequency=%d alarm_value=%d\n", frequency, alarm_value);
     return NOD_STATUS_SUCCESS;
 }
 
@@ -121,14 +132,17 @@ nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t ala
 void nod_mutex_init(nod_mutex_t *mutex)
 {
     (void)mutex;
+    nod_printf("nod_mutex_init\n");
 }
 
 void nod_mutex_lock(nod_mutex_t *mutex)
 {
     (void)mutex;
+    // nod_printf("nod_mutex_lock\n");
 }
 
 void nod_mutex_unlock(nod_mutex_t *mutex)
 {
     (void)mutex;
+    // nod_printf("nod_mutex_unlock\n");
 }

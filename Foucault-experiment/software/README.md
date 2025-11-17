@@ -59,3 +59,62 @@ I need a C code to run on an azdelivery esp32 devkitc v4, via the Arduino IDE, w
     * Print the result at 1 Hz: RPM count, the threshold value, and other statistics as needed
 * Use pin 32 for the PWM and 33 for the ADC input
 ```
+
+
+## Example output (on Linux)
+
+```
+$ ./a.out
+
++---------------------------------+
+| Project F - Foucault experiment |
++---------------------------------+
+
+nod_pwm_init: pin=32 freq=50
+nod_pwm_write_us: pin=32 freq=50 duty_us=1000
+nod_pwm_write_duty: pin=32 duty=0
+nod_adc1_init: ch=5
+nod_mutex_init
+nod_pwm_write_us: pin=32 freq=50 duty_us=1000
+nod_pwm_write_duty: pin=32 duty=0
+nod_timer_init: frequency=1000000 alarm_value=16000
+
+cmd_rpm =   1000 RPM ; rev dur =  62500 us
+meas_rpm =   1980 RPM ; rev dur =  30303 us
+threshold_index = 1510 [0-4096] = 1.843 V
+/--- sample_hist
+| sample_total_count=  1824
+| min=     0 | med=   518 | max=  2973
+| ds=    184    268    347    433    518    596    685    762    838   2973
+\---
+/--- rev_duration
+| sample_total_count=  1824
+| min=  1040 | med=  1104 | max=  1209
+| ds=   1075   1076   1083   1099   1104   1108   1109   1110   1111   1209
+\---
+/--- irq_duration
+| sample_total_count=  1824
+| min=     0 | med=     5 | max=    93
+| ds=      2      3      5      5      5      5      5      6      6     93
+\---
+
+
+cmd_rpm =   1000 RPM ; rev dur =  62500 us
+meas_rpm =   3060 RPM ; rev dur =  19607 us
+threshold_index = 1485 [0-4096] = 1.813 V
+/--- sample_hist
+| sample_total_count=   917
+| min=     0 | med=   525 | max=  2973
+| ds=    184    268    357    436    525    609    687    768    838   2973
+\---
+/--- rev_duration
+| sample_total_count=   917
+| min=  1036 | med=  1077 | max=  1555
+| ds=   1074   1075   1075   1076   1077   1097   1107   1110   1111   1555
+\---
+/--- irq_duration
+| sample_total_count=   917
+| min=     0 | med=     3 | max=    27
+| ds=      2      2      2      3      3      5      5      5      6     27
+\---
+```
