@@ -30,9 +30,9 @@
 // GPIO + IRQ:
 //   gpio + irq -> 5 us = 200 KHz = 1200 k RPM
 
-#define SAMPLE_HIST_BINS    1024  // Map 0-4096 (resolution 12 bits hardcoded) (0-5 V)
-#define REV_HIST_BINS       1024  // Map 0-1024 us (0-60 k RPM)
-#define IRQ_HIST_BINS       1024  // Map 0-1024 us
+#define SAMPLE_HIST_BINS    4096  // Map 0-4096 (resolution 12 bits hardcoded) (0-5 V)
+#define REV_HIST_BINS       4096  // Map 0-4096 us (0-240 k RPM)
+#define IRQ_HIST_BINS       4096  // Map 0-4096 us
 
 #define PRINT_CYCLE_SEC     1.000
 
@@ -71,7 +71,7 @@ uint32_t nod_rpm_to_pulse_us(uint32_t rpm)
 
 // ----------------------- ESC Arming -----------------------
 
-void nod_armESC(void)
+void nod_esc_arm(void)
 {
     nod_printf("Arming ESC...\n");
 
@@ -103,41 +103,47 @@ void NOD_IRAM_ATTR nod_timer_irq(void)
 
     const uint32_t start_us = nod_time_get_us();
 
-    // compute rev duration
-    const uint32_t rev_duration_us = start_us - start_us_last;
-    const uint32_t rev_duration_index = rev_duration_us;
-    nod_assert(0 <= rev_duration_index);
-    nod_assert(rev_duration_index < REV_HIST_BINS);
-    rev_duration_hist_irq[rev_duration_index] ++;
-
-    // read sample
-    const uint32_t adc_raw = nod_adc1_read(ADC_PIN);
-    const uint32_t sample_index = adc_raw / 4; // Map 0-4096 to 0-1024
-    nod_assert(0 <= sample_index);
-    nod_assert(sample_index < SAMPLE_HIST_BINS);
-    sample_hist_irq[sample_index] ++;
-
-    // crossing detection with basic debounce
-    if (sample_index >= threshold_index)
+    // only process on 2nd+ calls
+    if (start_us_last != 0)
     {
-        if (!currently_above)
+        // compute rev duration
+        const uint32_t rev_duration_us = start_us - start_us_last;
+        const uint32_t rev_duration_index = rev_duration_us;
+        nod_assert(0 <= rev_duration_index);
+        nod_assert(rev_duration_index < REV_HIST_BINS);
+        rev_duration_hist_irq[rev_duration_index] ++;
+
+        // read sample
+        const uint32_t adc_raw = nod_adc1_read(ADC_PIN);
+        const uint32_t sample_index = adc_raw;
+        nod_assert(0 <= sample_index);
+        nod_assert(sample_index < SAMPLE_HIST_BINS);
+        sample_hist_irq[sample_index] ++;
+
+        // crossing detection with basic debounce
+        if (sample_index >= threshold_index)
         {
-            rev_count++;
-            currently_above = true;
+            if (!currently_above)
+            {
+                rev_count++;
+                currently_above = true;
+            }
+        }
+        else
+        {
+            currently_above = false;
+        }
+
+        // ISR timing profiling
+        const uint32_t dur_us = nod_time_get_us() - start_us;
+        const uint32_t dur_index = dur_us;
+        if (0 <= dur_index && dur_index < IRQ_HIST_BINS)
+        {
+            irq_duration_hist_irq[dur_index]++;
         }
     }
-    else
-    {
-        currently_above = false;
-    }
 
-    // ISR timing profiling
-    const uint32_t dur_us = nod_time_get_us() - start_us;
-    const uint32_t dur_index = dur_us;
-    if (0 <= dur_index && dur_index < IRQ_HIST_BINS)
-    {
-        irq_duration_hist_irq[dur_index]++;
-    }
+    start_us_last = start_us;
 
     nod_mutex_unlock(&timer_mutex);
 }
@@ -170,6 +176,15 @@ int main(void)
 
     nod_mutex_init(&timer_mutex);
 
+    // start motor control and rev counting
+
+    threshold_index = SAMPLE_HIST_BINS/2;  // init to average
+    uint32_t rpm_command = 1000;
+
+    // nod_esc_arm();
+
+    nod_pwm_write_us(PWM_PIN, PWM_FREQ_HZ, nod_rpm_to_pulse_us(rpm_command));
+
     nod_timer_t timer;
     nod_timer_init(
         &timer,
@@ -178,12 +193,7 @@ int main(void)
         &nod_timer_irq
     );
 
-    nod_armESC();
-
-    uint32_t rpm_command = 1000;
     double last_print_sec = nod_time_get_sec();
-
-    nod_printf("loop...\n");
     while (true)
     {
         // Read serial input
@@ -233,31 +243,37 @@ int main(void)
             memcpy(rev_duration_hist_thread, (uint32_t*)rev_duration_hist_irq, sizeof(rev_duration_hist_irq));
             memcpy(irq_duration_hist_thread, (uint32_t*)irq_duration_hist_irq, sizeof(irq_duration_hist_irq));
 
-            memset((uint32_t*)sample_hist_irq, 0, SAMPLE_HIST_BINS);
-            memset((uint32_t*)rev_duration_hist_irq, 0, REV_HIST_BINS);
-            memset((uint32_t*)irq_duration_hist_irq, 0, IRQ_HIST_BINS);
+            memset((uint32_t*)sample_hist_irq, 0, sizeof(sample_hist_irq));
+            memset((uint32_t*)rev_duration_hist_irq, 0, sizeof(rev_duration_hist_irq));
+            memset((uint32_t*)irq_duration_hist_irq, 0, sizeof(irq_duration_hist_irq));
 
             nod_mutex_unlock(&timer_mutex);
 
-            // compute median value -> threshold_index
+            //
+            // Fancy weighted average => seems ok?, but complex
+            //
 
-            uint32_t sample_total_count = 0;
-            for (uint32_t i = 0; i < SAMPLE_HIST_BINS; i++)
+            uint32_t sum_below_threshold = 0;
+            uint32_t sample_total_count_below_threshold = 0;
+            for (uint32_t i = 0; i < threshold_index; i++)
             {
-                sample_total_count += sample_hist_thread[i];
+                sum_below_threshold += i * sample_hist_thread[i];
+                sample_total_count_below_threshold += sample_hist_thread[i];
             }
+            const uint32_t average_below = sum_below_threshold / sample_total_count_below_threshold;
 
-            uint32_t sample_counter = 0;
-            for (uint32_t i = 0; i < SAMPLE_HIST_BINS; i++)
+            uint32_t sum_above_threshold = 0;
+            uint32_t sample_total_count_above_threshold = 0;
+            for (uint32_t i = threshold_index; i < SAMPLE_HIST_BINS; i++)
             {
-                sample_counter += sample_hist_thread[i];
-
-                if (sample_counter >= sample_total_count/2)
-                {
-                    threshold_index = i;
-                    break;
-                }
+                sum_above_threshold += i * sample_hist_thread[i];
+                sample_total_count_above_threshold += sample_hist_thread[i];
             }
+            const uint32_t average_above = sum_above_threshold / sample_total_count_above_threshold;
+
+            const uint32_t average = (average_below + average_above) / 2;
+
+            threshold_index = average;
 
             // print
 
@@ -266,7 +282,7 @@ int main(void)
 
             nod_printf("cmd_rpm = %6d RPM ; rev dur = %6d us\n", rpm_command, 1000 * 1000 / (rpm_command / 60));
             nod_printf("meas_rpm = %6d RPM ; rev dur = %6d us\n", rev_count * 60, 1000 * 1000 / rev_count);
-            nod_printf("threshold_index = %4d [0-1024] = %5.3f V\n", threshold_index, threshold_index * 5.0 / 1024.0);
+            nod_printf("threshold_index = %4d [0-%d] = %5.3f V\n", threshold_index, SAMPLE_HIST_BINS, threshold_index * 5.0 / SAMPLE_HIST_BINS);
 
             rev_count = 0;
 
