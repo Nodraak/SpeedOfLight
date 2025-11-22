@@ -118,10 +118,32 @@ int nod_adc1_read(nod_adc1_channel_t ch)
     Timer
 */
 
+void* _nod_timer_background_thread(void *arg)
+{
+    nod_timer_t *timer = arg;
+
+    while (true)
+    {
+        usleep(timer->delay_us);
+        timer->userFunc();
+    }
+
+    return NULL;
+}
+
 nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t alarm_value, void (*userFunc)(void))
 {
-    (void)timer; (void)userFunc;
-    nod_printf("nod_timer_init: frequency=%d alarm_value=%d\n", frequency, alarm_value);
+    timer->delay_us = 1000 * 1000 * alarm_value / frequency;
+    timer->userFunc = userFunc;
+
+    nod_printf("nod_timer_init: userFunc_frequency=%d Hz (frequency=%d alarm_value=%d)\n", 1000 * 1000 / timer->delay_us, frequency, alarm_value);
+
+    const int ret = pthread_create(&timer->thread, NULL, _nod_timer_background_thread, timer);
+    if (ret != 0)
+    {
+        return NOD_STATUS_ERROR;
+    }
+
     return NOD_STATUS_SUCCESS;
 }
 

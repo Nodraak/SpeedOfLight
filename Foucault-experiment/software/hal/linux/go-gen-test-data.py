@@ -5,7 +5,7 @@ HIGH_COUNT = 1
 # HIGH_COUNT = 10
 
 N_SAMPLES = 1000
-PERIOD_MS = 50
+PERIOD_MS = 50 # 50 ms = 20 Hz = 1200 RPM
 
 
 def gen_samples(offset):
