@@ -1,37 +1,45 @@
 import random
 
-# high samples per period
+
+# high samples per rev (to test debounce)
 HIGH_COUNT = 1
 # HIGH_COUNT = 10
 
-N_SAMPLES = 1000
-PERIOD_MS = 50 # 50 ms = 20 Hz = 1200 RPM
+RPM = 1000
+SAMPLES_PER_REV = 60
 
 
-def gen_samples(offset):
+def gen_samples(avg, duration_sec):
     samples = []  # 0-4096
 
-    for i in range(N_SAMPLES):
-        pos = i % PERIOD_MS
+    for i in range(int(SAMPLES_PER_REV * RPM / 60 * duration_sec)):
+        pos = i % SAMPLES_PER_REV
         if pos < HIGH_COUNT:
-            samples.append(random.randint(offset + 1100, offset + 2000))
+            mu = avg + 500
         else:
-            samples.append(random.randint(offset + 100, offset + 900))
+            mu = avg - 500
+        s = int(random.gauss(mu=mu, sigma=100))
+        assert (0 <= s) and (s < 4096)
+        samples.append(s)
 
     return samples
 
 
 def main():
+    print(f"HIGH_COUNT={HIGH_COUNT}")
+    print(f"RPM={RPM} ({RPM/60:.0f} Hz)")
+    print(f"SAMPLES_PER_REV={SAMPLES_PER_REV}")
+    print(f"samples per sec = {RPM/60*SAMPLES_PER_REV:.0f}")
+    print("Generating...")
+
     #
     # Gen
     #
 
     samples = []  # 0-4096
 
-    for _ in range(5):
-        samples += gen_samples(offset=0)
-    for _ in range(5):
-        samples += gen_samples(offset=2000)
+    samples += gen_samples(avg=1000, duration_sec=5) # 0-1000 / 1000-2000
+    samples += gen_samples(avg=3000, duration_sec=5) # 2000-3000 / 3000-4000
 
     #
     # Print
@@ -39,10 +47,13 @@ def main():
 
     s = sum(samples)
     n = len(samples)
-    print(f"=> sum={s} / sample_total_count={n} =  average={int(s/n)}")
 
-    for s in samples:
-        print(s)
+    print(f"=> sum={s} / sample_total_count={n} = average={int(s/n)}")
+    print("Writing to adc-data.txt")
+
+    with open("adc-data.txt", "w") as f:
+        for s in samples:
+            f.write("%d\n" % s)
 
 
 main()

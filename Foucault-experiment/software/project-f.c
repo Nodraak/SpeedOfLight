@@ -34,7 +34,7 @@
 //   gpio + irq -> 5 us = 200 KHz = 1200 k RPM
 
 #define SAMPLE_HIST_BINS    4096  // Map 0-4096 (resolution 12 bits hardcoded) (0-5 V)
-#define REV_HIST_BINS       4096  // Map 0-4096 us (0-240 k RPM)
+#define REV_HIST_BINS       4096  // Map 0-4096 ms (1-100 k RPM = 0.6 - 60 ms)
 #define IRQ_HIST_BINS       4096  // Map 0-4096 us
 
 #define PRINT_CYCLE_SEC     1.000
@@ -85,56 +85,52 @@ void nod_esc_arm(void)
 
 void NOD_IRAM_ATTR nod_timer_irq(void)
 {
-    static bool currently_above = false;
-    static uint32_t start_us_last = 0;
+    static bool last_sample_above_threshold = false;
+    static uint32_t rev_start_us_last = 0;
 
     nod_mutex_lock(&timer_mutex);
 
     const uint32_t start_us = nod_time_get_us();
 
-    // only process on 2nd+ calls
-    if (start_us_last != 0)
+    // read sample
+    const uint32_t adc_raw = nod_adc1_read(ADC_PIN);
+    const uint32_t sample_index = adc_raw;
+    if (0 <= sample_index && sample_index < SAMPLE_HIST_BINS)
     {
-        // compute rev duration
-        const uint32_t rev_duration_us = start_us - start_us_last;
-        const uint32_t rev_duration_index = rev_duration_us;
-        if (0 <= rev_duration_index && rev_duration_index < REV_HIST_BINS)
-        {
-            rev_duration_hist_irq[rev_duration_index] ++;
-        }
-
-        // read sample
-        const uint32_t adc_raw = nod_adc1_read(ADC_PIN);
-        const uint32_t sample_index = adc_raw;
-        if (0 <= sample_index && sample_index < SAMPLE_HIST_BINS)
-        {
-            sample_hist_irq[sample_index] ++;
-        }
-
-        // crossing detection with basic debounce
-        if (sample_index >= threshold_index_irq)
-        {
-            if (currently_above == false)
-            {
-                rev_count_irq++;
-                currently_above = true;
-            }
-        }
-        else
-        {
-            currently_above = false;
-        }
-
-        // ISR timing profiling
-        const uint32_t dur_us = nod_time_get_us() - start_us;
-        const uint32_t dur_index = dur_us;
-        if (0 <= dur_index && dur_index < IRQ_HIST_BINS)
-        {
-            irq_duration_hist_irq[dur_index]++;
-        }
+        sample_hist_irq[sample_index] ++;
     }
 
-    start_us_last = start_us;
+    // crossing detection with basic debounce
+    if (sample_index >= threshold_index_irq)
+    {
+        if (last_sample_above_threshold == false)
+        {
+            last_sample_above_threshold = true;
+
+            rev_count_irq++;
+
+            // compute rev duration
+            const uint32_t rev_duration_us = start_us - rev_start_us_last;
+            const uint32_t rev_duration_index = rev_duration_us / 1000;
+            if (0 <= rev_duration_index && rev_duration_index < REV_HIST_BINS)
+            {
+                rev_duration_hist_irq[rev_duration_index] ++;
+            }
+            rev_start_us_last = start_us;
+        }
+    }
+    else
+    {
+        last_sample_above_threshold = false;
+    }
+
+    // ISR timing profiling
+    const uint32_t dur_us = nod_time_get_us() - start_us;
+    const uint32_t dur_index = dur_us;
+    if (0 <= dur_index && dur_index < IRQ_HIST_BINS)
+    {
+        irq_duration_hist_irq[dur_index]++;
+    }
 
     nod_mutex_unlock(&timer_mutex);
 }
@@ -256,7 +252,7 @@ int main(void)
             // Fancy weighted average => seems ok?, but complex
             //
 
-            uint32_t sum_below_threshold = 0;
+            uint32_t sum_below_threshold = threshold_index_irq;
             uint32_t sample_total_count_below_threshold = 1; //  avoid div by zero
             for (uint32_t i = 0; i < threshold_index_irq; i++)
             {
@@ -265,7 +261,7 @@ int main(void)
             }
             const uint32_t average_below = sum_below_threshold / sample_total_count_below_threshold;
 
-            uint32_t sum_above_threshold = 0;
+            uint32_t sum_above_threshold = threshold_index_irq;
             uint32_t sample_total_count_above_threshold = 1; //  avoid div by zero
             for (uint32_t i = threshold_index_irq; i < SAMPLE_HIST_BINS; i++)
             {
@@ -273,6 +269,8 @@ int main(void)
                 sample_total_count_above_threshold += sample_hist_thread[i];
             }
             const uint32_t average_above = sum_above_threshold / sample_total_count_above_threshold;
+
+            const float percent_below = 1.0 * sample_total_count_below_threshold / (sample_total_count_below_threshold + sample_total_count_above_threshold);
 
             const uint32_t average = (average_below + average_above) / 2;
 
@@ -292,25 +290,28 @@ int main(void)
 
             nod_printf("cmd_rpm  = %7.3f k RPM ; cmd_rev_dur  = %7.3f ms\n", rpm_command / 1000.0, 1000.0 / (rpm_command / 60.0));
             nod_printf("meas_rpm = %7.3f k RPM ; meas_rev_dur = %7.3f ms\n", rev_count_thread * 60.0 / 1000.0, 1000.0 / rev_count_thread);
-            nod_printf("threshold_index_irq = %4d [0-%d] = %5.3f V\n", threshold_index_irq, SAMPLE_HIST_BINS, threshold_index_irq * 5.0 / SAMPLE_HIST_BINS);
+            nod_printf(
+                "threshold_index_irq = %4d [0-%d] = %5.3f V // samples: %.1f%% < threshold < %.1f%%\n",
+                threshold_index_irq, SAMPLE_HIST_BINS, threshold_index_irq * 5.0 / SAMPLE_HIST_BINS, 100 * percent_below, 100 - 100 * percent_below
+            );
 
             // print sample stats
 
             nod_stats_t stats_sample_hist = {0};
             nod_stats_init(&stats_sample_hist, sample_hist_thread, SAMPLE_HIST_BINS, mapper, mapper);
-            nod_stats_print_stats(&stats_sample_hist, "sample_hist");
+            nod_stats_print_stats(&stats_sample_hist, "sample_hist (adc raw: 0-4096)");
 
             // print rev duration stats
 
             nod_stats_t stats_rev_duration = {0};
             nod_stats_init(&stats_rev_duration, rev_duration_hist_thread, REV_HIST_BINS, mapper, mapper);
-            nod_stats_print_stats(&stats_rev_duration, "rev_duration");
+            nod_stats_print_stats(&stats_rev_duration, "rev_duration (ms) (1 k RPM = 60 ms ; 100 k RPM = 0.6 ms)");
 
             // print IRQ duration stats
 
             nod_stats_t stats_irq_duration = {0};
             nod_stats_init(&stats_irq_duration, irq_duration_hist_thread, IRQ_HIST_BINS, mapper, mapper);
-            nod_stats_print_stats(&stats_irq_duration, "irq_duration");
+            nod_stats_print_stats(&stats_irq_duration, "irq_duration (us) (100 k RPM * 1000 samples/rev = 0.7 us ; Realistic ESP32 = 15 us");
 
             nod_printf("\n");
 

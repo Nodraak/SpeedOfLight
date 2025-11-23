@@ -90,7 +90,7 @@ void nod_stats_print_stats(nod_stats_t *stats, const char *title)
         {
             sample_counter += stats->buffer[i];
 
-            while (sample_counter >= sample_total_count * (current_decile + 1) / 10)
+            while ((current_decile < 10) && (sample_counter >= sample_total_count * (current_decile + 1) / 10))
             {
                 deciles[current_decile] = stats->index2sample(i);
                 current_decile++;
