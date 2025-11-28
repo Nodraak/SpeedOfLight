@@ -7,19 +7,19 @@
 #include <string.h>
 
 void nod_stats_init(
-    nod_stats_t *stat,
+    struct nod_stats_t *stats,
     uint32_t *buf,
     uint32_t buffer_size,
     uint32_t (*sample2index)(uint32_t param),
     uint32_t (*index2sample)(uint32_t param)
 )
 {
-    stat->buffer = buf;
-    stat->buffer_size = buffer_size;
-    stat->sample2index = sample2index;
-    stat->index2sample = index2sample;
+    stats->buffer = buf;
+    stats->buffer_size = buffer_size;
+    stats->sample2index = sample2index;
+    stats->index2sample = index2sample;
 
-    // memset(stat->buffer, 0, sizeof(stat->buffer[0]) * stat->buffer_size);
+    // memset(stats->buffer, 0, sizeof(stats->buffer[0]) * stats->buffer_size);
 }
 
 // void nod_stats_add_sample(nod_stats_t *stats, uint32_t sample)
@@ -37,7 +37,7 @@ void nod_stats_init(
 //     stats->buffer[index] += 1;
 // }
 
-void nod_stats_print_stats(nod_stats_t *stats, const char *title)
+void nod_stats_print(struct nod_stats_t *stats, const char *title)
 {
     uint32_t min = 0, max = 0, median = 0, deciles[10] = {0};
     uint32_t sample_counter = 0;

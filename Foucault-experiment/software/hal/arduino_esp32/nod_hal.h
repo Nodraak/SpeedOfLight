@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../nod_hal_common.h"
+#include "nod_hal_common.h"
 
-#include <Arduino.h>
-#include "esp_timer.h"
+// TODO
+#define NOD_IRAM_ATTR ARDUINO_ISR_ATTR
+// #define NOD_IRAM_ATTR IRAM_ATTR
 
 typedef struct nod_timer_t {
     hw_timer_t *data;

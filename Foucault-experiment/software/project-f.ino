@@ -163,6 +163,18 @@ int main(void)
 
     nod_mutex_init(&timer_mutex);
 
+    while (true)
+    {
+        nod_printf("\nhello 1000 us / 20 ms\n");
+        nod_pwm_write_us(PWM_PIN, PWM_FREQ_HZ, 1000);
+        nod_time_sleep_sec(5.000);
+
+        nod_printf("\nhello 2000 us / 20 ms\n");
+        nod_pwm_write_us(PWM_PIN, PWM_FREQ_HZ, 2000);
+        nod_time_sleep_sec(5.000);
+    }
+
+
     // start motor control and rev counting
 
     threshold_index_irq = SAMPLE_HIST_BINS/2;  // init to average
@@ -176,7 +188,7 @@ int main(void)
     nod_timer_init(
         &timer,
         TIMER_FREQUENCY,
-        /* alarm_value */ TIMER_FREQUENCY / SAMPLES_PER_REV / (rpm_command / 60) /* => 1 K RPM * 1000 sample / revolution = 60 us */,
+        /* callback_period_sec */ 1 / (SAMPLES_PER_REV * (rpm_command / 60)) /* => 1 K RPM * 1000 sample / revolution = 60 us */,
         &nod_timer_irq
     );
 
@@ -297,21 +309,21 @@ int main(void)
 
             // print sample stats
 
-            nod_stats_t stats_sample_hist = {0};
+            struct nod_stats_t stats_sample_hist = {0};
             nod_stats_init(&stats_sample_hist, sample_hist_thread, SAMPLE_HIST_BINS, mapper, mapper);
-            nod_stats_print_stats(&stats_sample_hist, "sample_hist (adc raw: 0-4096)");
+            nod_stats_print(&stats_sample_hist, "sample_hist (adc raw: 0-4096)");
 
             // print rev duration stats
 
-            nod_stats_t stats_rev_duration = {0};
+            struct nod_stats_t stats_rev_duration = {0};
             nod_stats_init(&stats_rev_duration, rev_duration_hist_thread, REV_HIST_BINS, mapper, mapper);
-            nod_stats_print_stats(&stats_rev_duration, "rev_duration (ms) (1 k RPM = 60 ms ; 100 k RPM = 0.6 ms)");
+            nod_stats_print(&stats_rev_duration, "rev_duration (ms) (1 k RPM = 60 ms ; 100 k RPM = 0.6 ms)");
 
             // print IRQ duration stats
 
-            nod_stats_t stats_irq_duration = {0};
+            struct nod_stats_t stats_irq_duration = {0};
             nod_stats_init(&stats_irq_duration, irq_duration_hist_thread, IRQ_HIST_BINS, mapper, mapper);
-            nod_stats_print_stats(&stats_irq_duration, "irq_duration (us) (100 k RPM * 1000 samples/rev = 0.7 us ; Realistic ESP32 = 15 us");
+            nod_stats_print(&stats_irq_duration, "irq_duration (us) (100 k RPM * 1000 samples/rev = 0.7 us ; Realistic ESP32 = 15 us");
 
             nod_printf("\n");
 
