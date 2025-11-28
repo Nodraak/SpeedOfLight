@@ -46,3 +46,26 @@ A few requests:
 ## 3D printing
 
 TODO
+
+OpenScad
+    Render
+    Export as STL
+
+Ultimaker Cura
+    Layer height: 0.2 mm
+    Density: 40% // 30-50%?
+    Pattern: Tri Hexagon // Cubic? (Tri-Hexagonal, Grid, Triangle?)
+    Speed: 50 mm/sec
+    -> 4.5h
+
+---
+
+https://reflexaerospace.atlassian.net/wiki/spaces/~712020b488b2d42fbf4eaba331e658f7247fa1/pages/1480196178/2025-03+-+RFX+3D+printer
+
+Layer height: 0.25
+Infill: 30%
+Speed: 60 mm/sec
+-> 3h
+
+(Mirco 1.5h)
+
