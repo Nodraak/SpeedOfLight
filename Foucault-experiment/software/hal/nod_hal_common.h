@@ -54,7 +54,9 @@ int nod_stdin_read(void);
 
 /*
     PWM (LEDC)
-    https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ledc.html
+    // https://docs.espressif.com/projects/arduino-esp32/en/latest/api/ledc.html
+
+    https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/ledc.html
 */
 
 typedef enum {

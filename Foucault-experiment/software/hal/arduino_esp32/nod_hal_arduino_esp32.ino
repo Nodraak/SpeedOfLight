@@ -87,6 +87,23 @@ int nod_stdin_read(void)
     PWM (LEDC)
 */
 
+/*
+    ledc_timer_config(
+        (ledc_timer_config_t){
+            Speed mode ledc_mode_t
+            Timer number ledc_timer_t
+            PWM signal frequency in Hz
+            Resolution of PWM duty
+            Source clock ledc_clk_cfg_t
+        }
+    );
+    ledc_channel_config(
+        (ledc_channel_config_t){
+            ledc_channel_t
+        }
+    );
+*/
+
 nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
 {
     bool ret = true;
@@ -102,6 +119,7 @@ nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
     }
 }
 
+// ledc_set_duty(). After that, call ledc_update_duty() t
 nod_status_t nod_pwm_write_duty(nod_pwm_pin_t pin, uint32_t duty)
 {
     const bool ret = ledcWrite((uint8_t)pin, duty);
