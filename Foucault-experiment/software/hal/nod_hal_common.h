@@ -63,6 +63,9 @@ typedef enum {
     // TODO
 } nod_pwm_pin_t;
 
+// res = 10 bits @ 50 Hz -> res_us = 10**6 / (freq * 2**res) = 20 us/bit = 2%
+#define PWM_RESOLUTION_BITS 10
+
 // bool ledcSetClockSource(ledc_clk_cfg_t source);
 //      source:
 //          LEDC_APB_CLK - APB clock: 80 MHz (?)
@@ -129,7 +132,7 @@ typedef struct nod_timer_t nod_timer_t;
 // Arduino ESP32: hw_timer_t * timerBegin(uint32_t frequency);
 // Arduino ESP32: void timerAttachInterrupt(hw_timer_t * timer, void (*userFunc)(void));
 // Arduino ESP32: void timerAlarm(hw_timer_t * timer, uint64_t alarm_value, bool autoreload, uint64_t reload_count);
-nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t alarm_value, void (*userFunc)(void));
+nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t timer_frequency, float callback_period_sec, void (*userFunc)(void));
 
 /*
     Mutex

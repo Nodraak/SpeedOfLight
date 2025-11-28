@@ -91,17 +91,7 @@ nod_status_t nod_pwm_init(nod_pwm_pin_t pin, uint32_t freq)
 {
     bool ret = true;
 
-    ret = ledcSetClockSource(LEDC_APB_CLK);
-    if (ret == true)
-    {
-        return NOD_STATUS_SUCCESS;
-    }
-    else
-    {
-        return NOD_STATUS_ERROR;
-    }
-
-    ret = ledcAttach((uint8_t)pin, freq, /* resolution */ 20);
+    ret = ledcAttach((uint8_t)pin, freq, PWM_RESOLUTION_BITS);
     if (ret == true)
     {
         return NOD_STATUS_SUCCESS;
@@ -131,7 +121,7 @@ nod_status_t nod_pwm_write_duty(nod_pwm_pin_t pin, uint32_t duty)
 
 nod_status_t nod_adc1_init(nod_adc1_channel_t ch)
 {
-    const esp_err_t ret = ESP_OK;
+    esp_err_t ret = ESP_OK;
 
     ret = adc1_config_width(ADC_WIDTH_BIT_12);
     if (ret != ESP_OK)
@@ -157,11 +147,16 @@ int nod_adc1_read(nod_adc1_channel_t ch)
     Timer
 */
 
-nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t frequency, uint64_t alarm_value, void (*userFunc)(void))
+nod_status_t nod_timer_init(nod_timer_t *timer, uint32_t timer_frequency, float callback_period_sec, void (*userFunc)(void))
 {
-    timer->data = timerBegin(frequency);
+    timer->data = timerBegin(timer_frequency);
     timerAttachInterrupt(timer->data, userFunc);
-    timerAlarm(timer->data, alarm_value, /* autoreload */ true, /* reload_count */ 0);
+    timerAlarm(
+        timer->data,
+        /* alarm_value */ (uint32_t)(timer_frequency * callback_period_sec),
+        /* autoreload */ true,
+        /* reload_count */ 0
+    );
     return NOD_STATUS_SUCCESS;
 }
 

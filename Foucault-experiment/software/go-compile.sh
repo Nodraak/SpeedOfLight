@@ -1,4 +1,7 @@
 set -e
 set -x
 
-gcc -O0 -g -lpthread -I hal/linux/ project-f.c nod_stats.c hal/nod_hal_common.c hal/linux/nod_hal_linux.c
+gcc -O0 -g -lpthread -I hal/linux/ -x c project-f.ino nod_stats.ino hal/nod_hal_common.ino hal/linux/nod_hal_linux.c
+
+# rm -r ~/.arduino-build/
+

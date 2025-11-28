@@ -1,0 +1,1 @@
+../hal/nod_hal_common.h
