@@ -26,7 +26,7 @@ d_main = 40; // arbitrary
 r_main = d_main / 2;
 
 mirror_L = 10; // space
-mirror_D = 20; // spec
+mirror_D = 22; // spec
 mirror_H = 30; // spec
 
 d_hole = 3; // spec

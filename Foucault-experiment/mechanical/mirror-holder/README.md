@@ -45,4 +45,12 @@ A few requests:
 
 ## 3D printing
 
-TODO
+* OpenScad
+    * Render
+    * Export as STL
+* Ultimaker Cura
+    * Layer height: 0.2 mm
+    * Density: 40% (TBD: 30-50%?)
+    * Pattern: Tri Hexagon (TBD: Cubic, Tri-Hexagonal, Grid, Triangle?)
+    * Speed: 50 mm/sec
+    * -> Print time: 4.5h (first PoC: 1.5h)
