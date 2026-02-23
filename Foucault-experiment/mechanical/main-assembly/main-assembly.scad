@@ -24,7 +24,8 @@
     ```
 */
 
-$fn = 72;
+// number of segments ; overrides $fa (minimum angle) and $fn (minimum size)
+$fn = $preview ? 32 : 64;
 
 //
 // Constants
@@ -34,10 +35,10 @@ $fn = 72;
 main_box_w = 10 + 30-10 + 70 + 30-10 + 10;  // wall + motor-wall + spinning cylinder + motor-wall + wall
 main_box_h = 80;
 
-main_cyl_d = 5 + 40 + 5; // 5 mm margin around spinning cylinder
+main_cyl_d = 2 + 40 + 2; // 5 mm margin around spinning cylinder
 
-motor_cyl_l = 30;
-motor_cyl_d = 50;
+motor_cube_depth = 20;
+motor_cube_side = 60;
 
 motor_screw_hole_pos = 40;
 motor_screw_hole_d = 3;
@@ -45,11 +46,11 @@ motor_screw_hole_d = 3;
 // light_shaft_pos = 90*1/4;
 light_shaft_pos = 40*1/4;
 light_shaft_d = 10;
-light_shaft_d_2 = 5;
+light_shaft_d_2 = 3;
 
-laser_l = 45;
-laser_d = 12;
-laser_box_d = 20;
+laser_l = 45;  // 35 + some margin for the wire
+laser_d = 13;  // 12 is too small
+laser_box_d = laser_d + 2*4;
 
 //
 // Top assembly
@@ -74,13 +75,13 @@ module top_assembly() {
 
             // Vertical shaft at +1/4
             translate([+light_shaft_pos, 0, 0])
-                cylinder(d = light_shaft_d, h = main_box_h + 2, center = true);
+                cylinder(d = light_shaft_d_2, h = main_box_h + 2, center = true);
 
-            // 4 resting slots - top
+            // 4 screw holes - top
             for (x_offset = [-(main_box_w/2-5+1), +main_box_w/2-5+1])
                 for (y_offset = [-(main_box_h/2-5+1), +main_box_h/2-5+1])
                     translate([x_offset, y_offset, 5])
-                        cube([10+2, 10+2, 10+2], center = true);
+                        cylinder(d = motor_screw_hole_d, h = 10+1, center = true);
         }
 
         // laser
@@ -118,17 +119,11 @@ module bottom_assembly() {
             translate([0, -main_cyl_d/2, -(main_box_w/2 - 10)])
                 cube([main_box_h/2 + 1, main_cyl_d, main_box_w - 2*10]);
 
-            // Sides motors - centered horizontal cylinder
-            translate([0, 0, -main_box_w/2 - 1])
-                cylinder(d = motor_cyl_d, h = motor_cyl_l + 1);
-            translate([0, 0, main_box_w/2 - motor_cyl_l])
-                cylinder(d = motor_cyl_d, h = motor_cyl_l + 1);
-
-            // Sides motors wires - centered cube
-            translate([main_box_h/2, 0, main_box_w/2])
-                cube([main_box_h-2, 10, 20+2], center = true);
-            translate([main_box_h/2, 0, -main_box_w/2])
-                cube([main_box_h-2, 10, 20+2], center = true);
+            // Sides motors attachement - cube
+            translate([0, 0, -main_box_w/2 + 10 + motor_cube_depth/2 - 1])
+                cube([motor_cube_side, motor_cube_side, motor_cube_depth], center = true);
+            translate([0, 0, main_box_w/2 - 10 - motor_cube_depth/2])
+                cube([motor_cube_side, motor_cube_side, motor_cube_depth], center = true);
 
             // 4 screw holes - on each side around cylinder hole
             for (x_offset = [-main_box_w/2, +main_box_w/2])
@@ -162,7 +157,7 @@ module bottom_assembly() {
         for (x_offset = [-(main_box_w/2-5+1), +main_box_w/2-5+1])
             for (y_offset = [-(main_box_h/2-5+1), +main_box_h/2-5+1])
                 translate([x_offset, y_offset, main_box_h/2-5])
-                    cube([10+2, 10+2, 10+2], center = true);
+                    cylinder(d = motor_screw_hole_d, h = 10+1, center = true);
 
         // cutout - side
         // translate([50, 0, 0])
