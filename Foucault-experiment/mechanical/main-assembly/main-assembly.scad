@@ -52,6 +52,10 @@ laser_l = 45;  // 35 + some margin for the wire
 laser_d = 13;  // 12 is too small
 laser_box_d = laser_d + 2*4;
 
+camera_pos = 40*1/4;
+camera_holder_side = 30;
+camera_holder_height = 45;
+
 //
 // Top assembly
 //
@@ -92,11 +96,26 @@ module top_assembly() {
 
             // laser hole
             translate([-light_shaft_pos, 0, laser_l/2])
-                cylinder(d = laser_d, h = laser_l+2, center = true);
+                cylinder(d = laser_d, h = laser_l+1, center = true);
 
             // wire
             translate([-light_shaft_pos-laser_box_d/2, 0, laser_l])
                 cube([laser_box_d, 5, 2*5], center = true);
+        }
+
+        // camera
+        difference() {
+            // main block
+            translate([+camera_pos, 0, laser_l/2])
+                cube([camera_holder_side, camera_holder_side, camera_holder_height], center = true);
+
+            // view hole
+            translate([+camera_pos, 0, laser_l/2])
+                cylinder(d = light_shaft_d, h = camera_holder_height+1, center = true);
+
+            // laser hole
+            translate([-light_shaft_pos, 0, laser_l/2])
+                cylinder(d = laser_d, h = laser_l+1, center = true);
         }
     }
 }
